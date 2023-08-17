@@ -1,0 +1,609 @@
+private void btnUpload_Click(object sender, EventArgs e)
+        {
+            string para1;
+            string uploadTime;
+            string uploadDate;
+            string ret = string.Empty;
+            string banbie;
+            float[] pressure = new float[20];
+            string[] arrUpload = new string[21];
+            //1 = 數據正常,可以上傳   0 = 數據異常,報警
+            int flag = 1;
+            int[] failUpload = new int[21];
+            string errMes = "未抓取到資料：\n";
+
+            DataSet tmp;
+            DataSet ds = null;
+
+            //通用移動表單上傳
+            uploadTime = System.DateTime.Now.ToString("yyyy/MM/dd HH:mm:ss");
+            uploadDate = System.DateTime.Now.Date.ToString("yyyy/MM/dd");
+            banbie = _report.getBanBie();
+            if (banbie == "0")
+            {
+                banbie = "白班";
+            }
+            else
+            {
+                banbie = "晚班";
+            }
+
+
+            //0
+            reportData_A[0] = "3";
+            try
+            {
+                pressure[0] = float.Parse(reportData_A[0]);
+            }
+            catch
+            {
+                errMes += "傳動速度\n";
+                failUpload[0] = 1;
+                flag = 0;
+            }
+            //1
+            PressureFlowParamsSetting.PressureFlowerPv_1[0] = "1.2";
+            try
+            {
+                pressure[1] = float.Parse(PressureFlowParamsSetting.PressureFlowerPv_1[0]);
+            }
+            catch
+            {
+                errMes += "去膜噴壓\n";
+                failUpload[1] = 1;
+                flag = 0;
+            }
+            //2
+            PressureFlowParamsSetting.PressureFlowerPv_1[3] = "1";
+            try
+            {
+                pressure[2] = float.Parse(PressureFlowParamsSetting.PressureFlowerPv_1[3]);
+            }
+            catch
+            {
+                errMes += "新液洗噴壓\n";
+                failUpload[2] = 1;
+                flag = 0;
+            }
+            //3
+            PressureFlowParamsSetting.PressureFlowerPv_1[5] = "1";
+            try
+            {
+                pressure[3] = float.Parse(PressureFlowParamsSetting.PressureFlowerPv_1[5]);
+            }
+            catch
+            {
+                errMes += "水洗1#噴壓\n";
+                failUpload[3] = 1;
+                flag = 0;
+            }
+            //4
+            PressureFlowParamsSetting.PressureFlowerPv_1[7] = "1";
+            try
+            {
+                pressure[4] = float.Parse(PressureFlowParamsSetting.PressureFlowerPv_1[7]);
+            }
+            catch
+            {
+                errMes += "水洗2#噴壓\n";
+                failUpload[4] = 1;
+                flag = 0;
+            }
+            //5
+            PressureFlowParamsSetting.PressureFlowerPv_1[9] = "1.1";
+            try
+            {
+                pressure[5] = float.Parse(PressureFlowParamsSetting.PressureFlowerPv_1[9]);
+            }
+            catch
+            {
+                errMes += "水洗3#噴壓\n";
+                failUpload[5] = 1;
+                flag = 0;
+            }
+            //6
+            PressureFlowParamsSetting.PressureFlowerPv_1[11] = "1.2";
+            try
+            {
+                pressure[6] = float.Parse(PressureFlowParamsSetting.PressureFlowerPv_1[11]);
+            }
+            catch
+            {
+                errMes += "水洗4#噴壓\n";
+                failUpload[6] = 1;
+                flag = 0;
+            }
+            //7
+            reportData_A[15] = "5";
+            try
+            {
+                pressure[7] = float.Parse(reportData_A[15]);
+            }
+            catch
+            {
+                errMes += "水洗4#溢流量\n";
+                failUpload[7] = 1;
+                flag = 0;
+            }
+            //8
+            PressureFlowParamsSetting.PressureFlowerPv_1[13] = "1.1";
+            try
+            {
+                pressure[8] = float.Parse(PressureFlowParamsSetting.PressureFlowerPv_1[13]);
+            }
+            catch
+            {
+                errMes += "微蝕槽噴嘴壓力\n";
+                failUpload[8] = 1;
+                flag = 0;
+            }
+            //9
+            PressureFlowParamsSetting.PressureFlowerPv_1[15] = "1.2";
+            try
+            {
+                pressure[9] = float.Parse(PressureFlowParamsSetting.PressureFlowerPv_1[15]);
+            }
+            catch
+            {
+                errMes += "水洗5#噴壓\n";
+                failUpload[9] = 1;
+                flag = 0;
+            }
+            //10
+            PressureFlowParamsSetting.PressureFlowerPv_1[17] = "1.1";
+            try
+            {
+                pressure[10] = float.Parse(PressureFlowParamsSetting.PressureFlowerPv_1[17]);
+            }
+            catch
+            {
+                errMes += "水洗6#噴壓\n";
+                failUpload[10] = 1;
+                flag = 0;
+            }
+            //11
+            PressureFlowParamsSetting.PressureFlowerPv_1[19] = "1.2";
+            try
+            {
+                pressure[11] = float.Parse(PressureFlowParamsSetting.PressureFlowerPv_1[19]);
+            }
+            catch
+            {
+                errMes += "水洗7#噴壓\n";
+                failUpload[11] = 1;
+                flag = 0;
+            }
+            //12
+            reportData_A[16] = "4";
+            try
+            {
+                pressure[12] = float.Parse(reportData_A[16]);
+            }
+            catch
+            {
+                errMes += "水洗7#溢流量\n";
+                failUpload[12] = 1;
+                flag = 0;
+            }
+            //13
+            PressureFlowParamsSetting.PressureFlowerPv_1[21] = "1.6";
+            try
+            {
+                pressure[13] = float.Parse(PressureFlowParamsSetting.PressureFlowerPv_1[21]);
+            }
+            catch
+            {
+                errMes += "酸洗噴嘴壓力\n";
+                failUpload[13] = 1;
+                flag = 0;
+            }
+            //14
+            PressureFlowParamsSetting.PressureFlowerPv_1[23] = "1.2";
+            try
+            {
+                pressure[14] = float.Parse(PressureFlowParamsSetting.PressureFlowerPv_1[23]);
+            }
+            catch
+            {
+                errMes += "水洗8#噴壓\n";
+                failUpload[14] = 1;
+                flag = 0;
+            }
+            //15
+            PressureFlowParamsSetting.PressureFlowerPv_1[25] = "7";
+            try
+            {
+                pressure[15] = float.Parse(PressureFlowParamsSetting.PressureFlowerPv_1[25]);
+            }
+            catch
+            {
+                errMes += "水洗9#噴壓\n";
+                failUpload[15] = 1;
+                flag = 0;
+            }
+            //16
+            PressureFlowParamsSetting.PressureFlowerPv_1[27] = "1.2";
+            try
+            {
+                pressure[16] = float.Parse(PressureFlowParamsSetting.PressureFlowerPv_1[27]);
+            }
+            catch
+            {
+                errMes += "水洗10#噴壓\n";
+                failUpload[16] = 1;
+                flag = 0;
+            }
+            //17
+            reportData_A[17] = "4";
+            try
+            {
+                pressure[17] = float.Parse(reportData_A[17]);
+            }
+            catch
+            {
+                errMes += "水洗10#溢流量\n";
+                failUpload[17] = 1;
+                flag = 0;
+            }
+            //18
+            reportData_A[14] = "0.3";
+            try
+            {
+                pressure[18] = float.Parse(reportData_A[14]);
+            }
+            catch
+            {
+                errMes += "最後一道水洗電導率\n";
+                failUpload[18] = 1;
+                flag = 0;
+            }
+            //19
+            reportData_A[4] = "7";
+            try
+            {
+                pressure[19] = float.Parse(reportData_A[4]);
+            }
+            catch
+            {
+                errMes += "最後一道水洗PH值\n";
+                failUpload[19] = 1;
+                flag = 0;
+            }
+
+            if(flag == 0)
+            {
+                MessageBox.Show(errMes);
+                return;
+            }
+            
+
+
+
+            //0.傳動速度
+            if (pressure[0] < 3.0)
+            {
+                flag = 0;
+                MessageBox.Show("傳動速度低於下界");
+            }
+            else if(pressure[0] > 3.4)
+            {
+                flag = 0;
+                MessageBox.Show("傳動速度高於上界");
+            }
+            else
+            {
+                arrUpload[0] = reportData_A[0];
+            }
+
+            //1.去膜噴壓
+            if (pressure[1] < 1.0)
+            {
+                flag = 0;
+                MessageBox.Show("去膜噴壓低於下界");
+                return;
+            }
+            else if (pressure[1] > 2.0)
+            {
+                flag = 0;
+                MessageBox.Show("去膜噴壓高於上界");
+            }
+            else
+            {
+                arrUpload[1] = PressureFlowParamsSetting.PressureFlowerPv_1[0];
+            }
+
+            //2.新液洗噴壓
+            if (pressure[2] < 0.5)
+            {
+                flag = 0;
+                MessageBox.Show("新液洗噴壓低於下界");
+            }
+            else if (pressure[2] > 1.5)
+            {
+                flag = 0;
+                MessageBox.Show("新液洗噴壓高於上界");
+            }
+            else
+            {
+                arrUpload[2] = PressureFlowParamsSetting.PressureFlowerPv_1[3];
+            }
+
+            //3.水洗1#噴壓
+            if (pressure[3] < 0.5)
+            {
+                flag = 0;
+                MessageBox.Show("水洗1#噴壓低於下界");
+            }
+            else if (pressure[3] > 1.5)
+            {
+                flag = 0;
+                MessageBox.Show("水洗1#噴壓高於上界");
+            }
+            else
+            {
+                arrUpload[3] = PressureFlowParamsSetting.PressureFlowerPv_1[5];
+            }
+
+            //4.水洗2#噴壓
+            if (pressure[4] < 0.5)
+            {
+                flag = 0;
+                MessageBox.Show("水洗2#噴壓低於下界");
+            }
+            else if (pressure[4] > 1.5)
+            {
+                flag = 0;
+                MessageBox.Show("水洗2#噴壓高於上界");
+            }
+            else
+            {
+                arrUpload[4] = PressureFlowParamsSetting.PressureFlowerPv_1[7];
+            }
+
+            //5.水洗3#噴壓
+            if (pressure[5] < 0.5)
+            {
+                flag = 0;
+                MessageBox.Show("水洗3#噴壓低於下界");
+            }
+            else if (pressure[4] > 1.5)
+            {
+                flag = 0;
+                MessageBox.Show("水洗3#噴壓高於上界");
+            }
+            else
+            {
+                arrUpload[5] = PressureFlowParamsSetting.PressureFlowerPv_1[9];
+            }
+
+            //6.水洗4#噴壓
+            if (pressure[6] < 0.5)
+            {
+                flag = 0;
+                MessageBox.Show("水洗4#噴壓低於下界");
+            }
+            else if (pressure[6] > 1.5)
+            {
+                flag = 0;
+                MessageBox.Show("水洗4#噴壓高於上界");
+            }
+            else
+            {
+                arrUpload[6] = PressureFlowParamsSetting.PressureFlowerPv_1[11];
+            }
+
+            //7.水洗4#溢流量
+            if (pressure[7] < 3.0)
+            {
+                flag = 0;
+                MessageBox.Show("水洗4#溢流量低於下界");
+            }
+            else if (pressure[7] > 7.0)
+            {
+                flag = 0;
+                MessageBox.Show("水洗4#溢流量高於上界");
+            }
+            else
+            {
+                arrUpload[7] = reportData_A[15];
+            }
+
+            //8.微蝕槽噴嘴壓力
+            if (pressure[8] < 0.5)
+            {
+                flag = 0;
+                MessageBox.Show("微蝕槽噴嘴壓力低於下界");
+            }
+            else if (pressure[8] > 1.5)
+            {
+                flag = 0;
+                MessageBox.Show("微蝕槽噴嘴壓力高於上界");
+            }
+            else
+            {
+                arrUpload[8] = PressureFlowParamsSetting.PressureFlowerPv_1[13];
+            }
+
+            //9.水洗5#噴壓
+            if (pressure[9] < 0.5)
+            {
+                flag = 0;
+                MessageBox.Show("水洗5#噴壓低於下界");
+            }
+            else if (pressure[9] > 1.5)
+            {
+                flag = 0;
+                MessageBox.Show("水洗5#噴壓高於上界");
+            }
+            else
+            {
+                arrUpload[9] = PressureFlowParamsSetting.PressureFlowerPv_1[15];
+            }
+
+            //10.水洗6#噴壓
+            if (pressure[10] < 0.5)
+            {
+                flag = 0;
+                MessageBox.Show("水洗6#噴壓低於下界");
+            }
+            else if (pressure[10] > 1.5)
+            {
+                flag = 0;
+                MessageBox.Show("水洗6#噴壓高於上界");
+            }
+            else
+            {
+                arrUpload[10] = PressureFlowParamsSetting.PressureFlowerPv_1[17];
+            }
+
+            //11.水洗7#噴壓
+            if (pressure[11] < 0.5)
+            {
+                flag = 0;
+                MessageBox.Show("水洗7#噴壓低於下界");
+            }
+            else if (pressure[11] > 1.5)
+            {
+                flag = 0;
+                MessageBox.Show("水洗7#噴壓高於上界");
+            }
+            else
+            {
+                arrUpload[11] = PressureFlowParamsSetting.PressureFlowerPv_1[19];
+            }
+
+            //12.水洗7#溢流量
+            if (pressure[12] < 3.0)
+            {
+                flag = 0;
+                MessageBox.Show("水洗7#溢流量低於下界");
+            }
+            else if (pressure[12] > 7.0)
+            {
+                flag = 0;
+                MessageBox.Show("水洗7#溢流量高於上界");
+            }
+            else
+            {
+                arrUpload[12] = reportData_A[16];
+            }
+
+            //13.酸洗噴嘴壓力
+            if (pressure[13] < 1.0)
+            {
+                flag = 0;
+                MessageBox.Show("酸洗噴嘴壓力低於下界");
+            }
+            else if (pressure[13] > 2.0)
+            {
+                flag = 0;
+                MessageBox.Show("酸洗噴嘴壓力高於上界");
+            }
+            else
+            {
+                arrUpload[13] = PressureFlowParamsSetting.PressureFlowerPv_1[21];
+            }
+
+            //14.水洗8#噴壓
+            if (pressure[14] < 0.5)
+            {
+                flag = 0;
+                MessageBox.Show("水洗8#噴壓低於下界");
+            }
+            else if (pressure[14] > 1.5)
+            {
+                flag = 0;
+                MessageBox.Show("水洗8#噴壓高於上界");
+            }
+            else
+            {
+                arrUpload[14] = PressureFlowParamsSetting.PressureFlowerPv_1[23];
+            }
+
+            //15.水洗9#噴壓
+            if (pressure[15] < 0.5)
+            {
+                flag = 0;
+                MessageBox.Show("水洗9#噴壓低於下界");
+            }
+            else if (pressure[15] > 1.5)
+            {
+                flag = 0;
+                MessageBox.Show("水洗9#噴壓高於上界");
+            }
+            else
+            {
+                arrUpload[15] = PressureFlowParamsSetting.PressureFlowerPv_1[25];
+            }
+
+            //16.水洗10#噴壓
+            if (pressure[16] < 0.5)
+            {
+                flag = 0;
+                MessageBox.Show("水洗10#噴壓低於下界");
+            }
+            else if (pressure[16] > 1.5)
+            {
+                flag = 0;
+                MessageBox.Show("水洗10#噴壓高於上界");
+            }
+            else
+            {
+                arrUpload[16] = PressureFlowParamsSetting.PressureFlowerPv_1[27];
+            }
+
+            //17.水洗10#溢流量
+            if (pressure[17] < 3.0)
+            {
+                flag = 0;
+                MessageBox.Show("水洗10#溢流量低於下界");
+            }
+            else if (pressure[17] > 7.0)
+            {
+                flag = 0;
+                MessageBox.Show("水洗10#溢流量高於上界");
+            }
+            else
+            {
+                arrUpload[17] = reportData_A[17];
+            }
+
+            //18.最後一道水洗電導率
+            arrUpload[18] = reportData_A[14];
+
+            //19.最後一道水洗PH值
+            if (pressure[19] < 5.0)
+            {
+                flag = 0;
+                MessageBox.Show("最後一道水洗PH值低於5");
+            }
+            else if (pressure[19] > 9.0)
+            {
+                flag = 0;
+                MessageBox.Show("最後一道水洗PH值高於9");
+            }
+            else
+            {
+                arrUpload[19] = reportData_A[4];
+            }
+            
+
+            //20.自動添加
+            arrUpload[20] = "Y";
+
+
+            //實際輸入上傳, 不同栏位间用竖线(|)隔开, 例如: 
+            //報表代碼|記錄日期|機台號|班別|單據狀態|創建時間|創建人工號|審核時間|審核人|保養明細項次
+            if (flag == 1)
+            {
+                para1 = "SfceWebSys1095|" + uploadDate + "|" + reportCode + "|" + banbie + "|9|" + uploadTime + "|" + dataRecod.logUserName + "|||" + arrUpload[0] + "=" + arrUpload[1] + "=" + arrUpload[2] + "=" + arrUpload[3] + "=" + arrUpload[4] + "=" + arrUpload[5] + "=" + arrUpload[6] + "=" + arrUpload[7] + "=" + arrUpload[8] + "=" + arrUpload[9] + "=" + arrUpload[10] + "=" + arrUpload[11] + "=" + arrUpload[12] + "=" + arrUpload[13] + "=" + arrUpload[14] + "=" + arrUpload[15] + "=" + arrUpload[16] + "=" + arrUpload[17] + "=" + arrUpload[18] + "=" + arrUpload[19] + "=" + arrUpload[20];
+                tmp = webServiceDll.ws.getDataFromSer("廠商英文名稱", "設備名稱", "設備編號", "FPC02", "FPC19", para1, uploadTime);
+
+                ret = tmp.Tables[0].Rows[0][0].ToString();
+                // ret = ConvertDataSetToString(tmp);
+                MessageBox.Show("上傳返回結果：" + ret);
+            }
+
+
+            
+        }
