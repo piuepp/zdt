@@ -1,0 +1,430 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+
+import gtk
+import sys
+import incam
+import gobject
+import os
+import glib
+import pango
+
+keywords = ["apple", "banana is bacteria and virus", "Anna"]
+selected_job = "AOI"
+incam = incam.InCAM()
+folder_path = "/home/incam/Desktop/CAM"
+joblist_dir = '/home/InCAMPro/incam_db1/jobs'
+Width = 1
+Spacing = 1
+
+def MessageDia_OK(text):
+ md = gtk.MessageDialog(None,gtk.DIALOG_MODAL|gtk.DIALOG_DESTROY_WITH_PARENT,gtk.MESSAGE_INFO,gtk.BUTTONS_OK,text)
+ md.run()
+ md.destroy()
+
+#Can't find width and spacing
+class InputDialog(gtk.Dialog):
+ def __init__(self, parent):
+  gtk.Dialog.__init__(self, "input", parent, gtk.DIALOG_MODAL | gtk.DIALOG_DESTROY_WITH_PARENT, (gtk.STOCK_OK, gtk.RESPONSE_OK))
+  label1 = gtk.Label("line_width:")
+  label2 = gtk.Label("line_spacing:")
+  self.entry1 = gtk.Entry()
+  self.entry2 = gtk.Entry()
+  self.vbox.pack_start(label1, False, False, 0)
+  self.vbox.pack_start(self.entry1)
+  self.vbox.pack_start(label2, False, False, 0)
+  self.vbox.pack_start(self.entry2)
+  self.show_all()
+
+#Get features
+def open_input_dialog(parent):
+ dialog = InputDialog(parent)
+ response = dialog.run()
+
+ #Get width and spacing manually
+ if response == gtk.RESPONSE_OK:
+  global Width
+  global Spacing
+  Width = float(dialog.entry1.get_text())
+  Spacing = float(dialog.entry2.get_text())
+  print("input content:%f/%f" % (Width, Spacing))
+
+ #Destroy Dialog
+ dialog.destroy()
+
+#Start GTK
+class PyApp(gtk.Window):
+ def __init__(self):
+
+  #Super
+  super(PyApp, self).__init__()
+
+  #Window size
+  self.set_default_size(700,400)
+
+  #Window name
+  self.set_title("AOI CAM Automation by Anna")
+
+  #Window position
+  self.set_position(gtk.WIN_POS_CENTER)
+  self.set_border_width(10) 
+  main_vbox = gtk.VBox(False,8)
+  self.add(main_vbox)
+  self.work_layer = ''
+  self.filt_layerlist = ['Click "Show" before "OK"']
+
+  #Job name
+  frame_horiz0 = gtk.Frame("Job Name:")
+  main_vbox.pack_start(frame_horiz0, padding=5)
+  self.Hbox0 = gtk.HBox()
+  self.Hbox0.set_border_width(10)
+  frame_horiz0.add(self.Hbox0)
+
+  #Inf of Job
+  frame_horiz1 = gtk.Frame("Job Information:")
+  main_vbox.pack_start(frame_horiz1, padding = 5)
+  Hbox1 = gtk.HBox(False,5)
+         Hbox1.set_border_width(20)
+  frame_horiz1.add(Hbox1)
+  self.jobtext = AutoCompleteEntry()
+  self.jobtext.add_events(gtk.gdk.KEY_RELEASE_MASK)
+  Hbox1.pack_start(self.jobtext,True,True,0)
+
+  #Update text
+  self.label0 = gtk.Label(selected_job)
+  self.Hbox0.pack_start(self.label0,True,True,0)
+  glib.timeout_add(100, self.update_text)
+  
+  #Show information button
+  button2 = gtk.Button(label = "Show")
+  button2.connect("clicked", self.Show_inf)
+  button2.set_size_request(80,30)
+  Hbox1.pack_start(button2, False, False,0)
+
+  #PCB improve
+  yjoblabels = gtk.Label(u'PCB Optimization:')
+  self.fmasksyh = gtk.combo_box_new_text()
+  self.fmasksyh.set_size_request(80,30)
+  self.fmasksyh.append_text("no")
+  self.fmasksyh.append_text("yes")
+  self.fmasksyh.set_active(0)
+  Hbox1.pack_start(yjoblabels,False,False,0)
+  Hbox1.pack_start(self.fmasksyh,False,False,0)
+
+  #Information display
+  frame_horiz2 = gtk.Frame("")
+  main_vbox.pack_start(frame_horiz2, padding = 0)
+  self.Hbox2 = gtk.HBox()
+  self.Hbox2.set_border_width(30)
+  frame_horiz2.add(self.Hbox2)
+
+  #Change text size
+  font_desc = pango.FontDescription()
+  font_desc.set_size(16 * pango.SCALE)
+  self.label1 = gtk.Label(self.work_layer)
+  self.label1.modify_font(font_desc)
+  self.Hbox2.pack_start(self.label1,True,False,0)
+  self.label1.set_alignment(0, 0)
+
+  #Button Emily
+  frame_horiz3 = gtk.Frame("")
+  main_vbox.pack_start(frame_horiz3, padding=5)
+  Hbox3 = gtk.HBox()
+  Hbox3.set_border_width(10)
+  frame_horiz3.add(Hbox3)
+
+  #Exit button
+  button0 = gtk.Button(label = "Exit")
+  button0.connect("clicked", self.on_close)
+  button0.set_size_request(80,30)
+  map = button0.get_colormap()
+  color0 = map.alloc_color("#FF0000")
+  style0 = button0.get_style().copy()
+  style0.bg[gtk.STATE_NORMAL] = color0
+  button0.set_style(style0)
+  Hbox3.pack_start(button0, False, False,0)
+  
+  #OK button
+  button1 = gtk.Button(label = "OK")
+  button1.set_size_request(120,30)
+  button1.connect("clicked", self.ok_open)
+  map = button1.get_colormap()
+  color1 = map.alloc_color("#1e90ff")
+  style1 = button1.get_style().copy()
+  style1.bg[gtk.STATE_NORMAL] = color1
+  button1.set_style(style1)
+  Hbox3.pack_end(button1,False, False, 0)
+
+  #Destroy Window
+  self.connect("destroy",self.on_close)
+  self.show_all()
+
+ #Close GTK
+ def on_close(self,widget):
+  gtk.main_quit()
+  return
+
+ #Show Information
+ def Show_inf(self, widget):
+  job_now = selected_job[:-4]
+  self.Import_Job(job_now)
+  self.Search_Layer(job_now) 
+ 
+ #Open file
+ def Open_Job(self,jobname):
+  incam.COM('open_job,job=%s,open_win=yes,disk_map=,job_map='%(jobname))
+  incam.COM('set_step,name=pcb')
+  incam.COM('open_group,job=%s,step=pcb,is_sym=no'%(jobname))
+  incam.COM('open_entity,job=%s,type=step,name=pcb,iconic=no'%(jobname))
+  incam.COM('set_subsystem,name=1-Up-Edit')
+  incam.COM('check_inout,job=%s,mode=out,ent_type=job'%(jobname))
+
+ #Import file
+ def Import_Job(self, jobname):
+  already_in_dir = os.listdir(joblist_dir)
+  selected_job_tgz = jobname + ".tgz"
+  if jobname in already_in_dir:  
+   pass
+  else:
+   incam.COM('import_job,db=db1,path=%s,name=%s'%((folder_path + '/' + jobname + '.tgz'), jobname))
+   
+
+ #Search properties
+ def Search_Layer(self, jobname):
+  fuck_layer = incam.DO_INFO('-t step -e ' + jobname + '/panel -d LAYERS_LIST,units=mm,angle_direction=ccw')
+  
+  shit_layer = fuck_layer['gLAYERS_LIST']
+  self.filt_layerlist = [item for item in shit_layer if (item.endswith("bcq")) and ('k' not in item)]
+
+
+ def Search_Features(self, jobname):
+  fuck_line = incam.INFO("-t layer -e "+jobname+"/panel/"+self.work_layer+" -d FEATURES -o f0,  \
+        units=mm,  \
+        angle_direction=ccw")
+  self.flag = 0  
+  for j in fuck_line:
+   if j.startswith("#T"):
+    i = j.split(' ')
+    if len(i) >= 10:
+     if (i[7] == '1') and (i[8] == '1.6' or i[8] == '1') and (i[9] == '0.50000'):
+      if '/' in i[10]:
+       tmp = i[10][1:-1].split('/')
+       
+       if len(tmp) == 2:
+        self.flag = 1
+        self.line_width = float(tmp[0])
+        self.spacing = float(tmp[1])
+  #Not find      
+  if self.flag == 0:
+   incam.PAUSE('You should keyin manually')
+   open_input_dialog(self)
+   incam.COM('display_layer,name=%s,display=no' % self.work_layer)
+   global Width
+   global Spacing
+   self.line_width = Width
+   self.spacing = Spacing
+ 
+ #PCB improve
+ def PCB_Improve(self):
+  incam.COM('display_layer,name=%s,display=yes' % self.filt_layerlist[0])
+  incam.COM('work_layer,name=%s' % self.filt_layerlist[0])
+  for i in self.filt_layerlist[1:]:
+   incam.COM('display_layer,name=%s,display=yes' % i)
+   incam.COM('affected_layer,name=%s,mode=single,affected=yes' % i)
+  incam.COM('sel_contourize,accuracy=6.35,break_to_islands=yes,clean_hole_size=76.2,clean_hole_mode=area')
+
+ #Select panel
+ def Select_Panel(self, job_name):
+  incam.COM('set_step,name=panel')
+  incam.COM('open_group,job=%s,step=panel,is_sym=no'%(job_name))
+  incam.COM('open_entity,job=%s,type=step,name=panel,iconic=no'%(job_name))
+  incam.COM('zoom_refresh')
+  
+ #Display layer
+ def Display_Layer(self):
+  incam.COM('display_layer,name=%s,display=yes'%(self.work_layer))
+  incam.COM('work_layer,name=%s'%(self.work_layer))
+
+ #Panel improve
+ def Panel_Improve(self):
+  incam.COM('sel_contourize,accuracy=6.35,break_to_islands=yes,clean_hole_size=76.2,clean_hole_mode=area')
+  
+
+ #Fill outline
+ def Outline(self):
+  incam.COM('profile_limits,layers=,type=all,margin=0')
+
+ #pcs_id
+ def Pcs(self, jobname):
+  incam.COM('set_subsystem,name=CDR')
+  incam.COM('cdr_open_session,job=,step=panel,set_name=pcs_id,interface=fusion, cfg_type=user_defined_cfg,cfg_name=fusionDefaultConfiguration, cfg_path=/home/InCAMPro/server/site_data/hooks/cdr,sub_dir=fusion')
+  incam.COM('cdr_set_current_cdr_name,job=%s,step=panel, set_name=pcs_id' % (jobname))
+  incam.COM('cdr_create_configuration,set_name=,cfg_name=fusionDefaultConfiguration, cfg_path=/home/InCAMPro/server/site_data/hooks/cdr,sub_dir=fusion')
+  incam.COM('cdr_set_machine,machine=fusion,cfg_name=fusionDefaultConfiguration')
+  incam.COM('cdr_set_table,set_name=,name=30x30,x_dim=762,y_dim=762')
+
+ #Reselect layer and check
+ def Reselect_Layer(self):
+  incam.COM('cdr_display_layer,name=%s,display=no,type=physical' % (self.work_layer))
+  incam.COM('cdr_display_layer,name=%s,display=yes,type=physical' % (self.work_layer))
+  incam.COM('work_layer,name=%s' % (self.work_layer))
+  incam.COM('cdr_work_layer,layer=%s' % (self.work_layer))
+
+ #Machine200 selected
+ def Machine200(self):
+  incam.COM('cdr_lyr_params,lyr_type=outer,pattern=mixed,polarity=pos,target_db=FusionDB,rule_file=UltraFusion-200')
+  
+ #MachineII8800 selected
+ def Machine8800(self):
+  incam.COM('cdr_lyr_params,lyr_type=outer,pattern=mixed,polarity=pos,target_db=DiscoveryDB,rule_file=DISCOVERY-II-8800')
+  
+ #line_width and spacing key in
+ def Auto_Keyin(self):
+  incam.COM('cdr_line_width,nom_width=%f,min_width=0' %(self.line_width))
+  incam.COM('cdr_spacing,nom_space=%f,min_space=0' %(self.spacing))
+
+ #Automatic Inspection Area
+ def AIA(self):
+  incam.COM('cdr_set_area_auto,steps=pcb,margin_x=0,margin_y=0,inspected_steps=')
+  
+ #Get limit
+ def Search_Limit(self, jobname):
+  lim_dic = incam.DO_INFO('-t layer -e %s/panel/%s -d LIMITS, units=mm, angle_direction=ccw' % (jobname, self.work_layer))
+  x_min = float(lim_dic['gLIMITSxmin'][1:-1])
+  x_max = float(lim_dic['gLIMITSxmax'][1:-1])
+  y_min = float(lim_dic['gLIMITSymin'][1:-1])
+  y_max = float(lim_dic['gLIMITSymax'][1:-1])
+  self.x = x_max - x_min
+  self.y = y_max - y_min
+ 
+
+ #Mirror and quadrant
+ def Mirror(self):
+  #ttr no mirror_y
+  if 'ttr' in self.work_layer:
+   incam.COM('cdr_show_alignment,stage=BARE_COPPER,alignment=on,table=on')
+   incam.COM('cdr_show_alignment,stage=BARE_COPPER,alignment=on,table=on')
+   incam.COM('cdr_align,stage1=BARE_COPPER,offset_x=30,offset_y=%f,rotate_ccw=270,mirror_by_x=no,mirror_by_y=no' % (self.x + 30.0))
+   incam.COM('cdr_show_alignment,stage=BARE_COPPER,alignment=on,table=on')
+   incam.COM('cdr_show_alignment,stage=BARE_COPPER,alignment=on,table=on')
+  #btr mirror
+  else:
+   incam.COM('cdr_show_alignment,stage=BARE_COPPER,alignment=on,table=on')
+   incam.COM('cdr_show_alignment,stage=BARE_COPPER,alignment=on,table=on')
+   incam.COM('cdr_align,stage1=BARE_COPPER,offset_x=%f,offset_y=%f,rotate_ccw=270,mirror_by_x=no,mirror_by_y=yes' % (self.y + 30.0, self.x + 30.0))
+   incam.COM('cdr_show_alignment,stage=BARE_COPPER,alignment=on,table=on')
+   incam.COM('cdr_show_alignment,stage=BARE_COPPER,alignment=on,table=on')
+
+ #Output file 200
+ def Output200(self):
+  incam.COM('rv_tab_empty,report=CdrGuiOutputReportTab,is_empty=yes')
+  incam.COM('cdr_opfx_output,units=inch,anchor_mode=zero,target_machine=v300,output_layers=affected,break_surf=no,break_arc=no,break_sr=no,break_fsyms=no,upkit=yes,\
+contourize=no,units_factor=0.001,scale_x=1,scale_y=1,accuracy=0.2,anchor_x=0,anchor_y=0,min_brush=25.4,path=/home/InCAMPro/server/site_data/hooks/cdr/aoimnt/fusion_interface/spool6,multi_trg_machines=fusion,output_pcb_num=yes,pcb_num_layer=pcb_num')
+  incam.COM('rv_tab_view_results_enabled,report=CDR Output Report,is_enabled=yes,serial_num=-1,all_count=-1')
+
+ #Output file 8800
+ def Output8800(self):
+  incam.COM('rv_tab_empty,report=CdrGuiOutputReportTab,is_empty=yes')
+  incam.COM('cdr_opfx_output,units=inch,anchor_mode=zero,target_machine=v300,output_layers=affected,break_surf=no,break_arc=no,break_sr=no,break_fsyms=no,upkit=yes,\
+contourize=no,units_factor=0.001,scale_x=1,scale_y=1,accuracy=0.2,anchor_x=0,anchor_y=0,min_brush=25.4,path=/home/InCAMPro/server/site_data/hooks/cdr/aoimnt/fusion_interface/spool3,multi_trg_machines=fusion,output_pcb_num=yes,pcb_num_layer=pcb_num')
+  incam.COM('rv_tab_view_results_enabled,report=CDR Output Report,is_enabled=yes,serial_num=-1,all_count=-1')
+
+ #Close layer and reset
+ def Close_Layer(self, jobname):
+  incam.COM('cdr_display_layer,name=%s,display=no,type=physical' % self.work_layer)
+  incam.COM('cdr_work_layer,layer=')
+  incam.COM('set_subsystem,name=1-Up-Edit')
+  incam.COM('cdr_change_step,step=pcb')
+  incam.COM('set_step,name=pcb')
+  incam.COM('set_step,name=pcb')
+  incam.COM('cdr_set_current_cdr_name,job=%s,step=pcb,set_name=pcs_id' % jobname)
+  incam.COM('cdr_set_machine,machine=fusion,cfg_name=fusionDefaultConfiguration')
+  incam.COM('cdr_set_table,set_name=,name=30x30,x_dim=762,y_dim=762')
+  incam.COM('set_step,name=panel')
+  incam.COM('zoom_refresh')
+ 
+ #Dynamic update label
+ def update_text(self):
+  glib.idle_add(lambda: self.label0.set_text(selected_job))
+  tmp = ''
+  for i in self.filt_layerlist:
+   tmp += i + '\n'
+  glib.idle_add(lambda: self.label1.set_text(tmp))
+  return True
+
+ #Ok_open file
+ def ok_open(self, widget):
+  
+  job_now = selected_job[:-4]
+  self.Import_Job(job_now)
+  self.Open_Job(job_now) 
+  self.Search_Layer(job_now) 
+  self.pcb = self.fmasksyh.get_active_text()
+  if(self.pcb == 'yes'):
+   self.PCB_Improve()
+  for i in self.filt_layerlist:
+   self.work_layer = i
+   self.Select_Panel(job_now) 
+   self.Display_Layer()
+   self.Panel_Improve()
+   self.Search_Features(job_now) 
+   self.Outline()
+   self.Pcs(job_now) 
+   self.Reselect_Layer()
+   self.Machine200()
+   self.Auto_Keyin()
+   self.AIA()
+   self.Search_Limit(job_now) 
+   self.Mirror()
+   self.Output200()
+   self.Machine8800()
+   self.Output8800()
+   self.Close_Layer(job_now) 
+
+   
+  gtk.main_quit()
+
+def hello(self,widget): 
+  print "Hello my name is Anna, I'm a virgin!"
+
+#Auto complete
+class AutoCompleteEntry(gtk.Entry):
+ def __init__(self):
+  super(AutoCompleteEntry, self).__init__()
+  self.set_completion(self.create_completion())
+  self.selected_value = None
+
+ def create_completion(self):
+  completion = gtk.EntryCompletion()
+  completion.set_model(gtk.ListStore(str))
+  completion.set_text_column(0)
+  completion.set_inline_completion(True)
+  completion.set_inline_selection(True)
+
+  completion.connect("match-selected", self.on_match_selected)
+
+  for keyword in keywords:
+   completion.get_model().append([keyword])
+
+  return completion
+
+ def on_match_selected(self, completion, model, iter):
+  self.selected_value = model[iter][0]
+  global selected_job
+  selected_job = self.selected_value
+  
+
+#Filename of job
+def get_files_in_folder(folder_path):
+ for file_name in os.listdir(folder_path):
+  if os.path.isfile(os.path.join(folder_path, file_name)):
+   keywords.append(file_name)
+
+def main(): 
+ get_files_in_folder(folder_path)
+ PyApp()
+ gtk.main()
+ sys.exit()
+
+if __name__ == '__main__':
+ main()
